@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodyRS - Food Recommendation System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .food-card {
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+        }
+        .food-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .tag {
+            background-color: #f0f0f0;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+        .star-rating {
+            color: #ffc107;
+        }
+        .empty-star {
+            color: #e0e0e0;
+        }
+        .category-btn {
+            margin: 5px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🍽️ FoodyRS</a>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <h1 class="mb-4">Food Recommendation System</h1>
+        
+        {% if not food_data_available %}
+            <div class="alert alert-warning">
+                No food data available. Please ensure that food_list.pkl and similarity.pkl files are in the artifacts directory.
+            </div>
+        {% else %}
+            <!-- Search Form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="post" action="/search">
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="search_query" class="form-label">Search for food</label>
+                                <input type="text" class="form-control" id="search_query" name="search_query" 
+                                    placeholder="e.g., cake, chicken" value="{{ search_query }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="min_rating" class="form-label">Minimum Rating: <span id="min_rating_value">{{ min_rating }}</span></label>
+                                <input type="range" class="form-range" id="min_rating" name="min_rating" 
+                                    min="1" max="5" step="0.1" value="{{ min_rating }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <label for="num_results" class="form-label">Number of results</label>
+                                <select class="form-select" id="num_results" name="num_results">
+                                    <option value="5" {% if num_results == 5 %}selected{% endif %}>5</option>
+                                    <option value="10" {% if num_results == 10 %}selected{% endif %}>10</option>
+                                    <option value="15" {% if num_results == 15 %}selected{% endif %}>15</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Search</button>
+                    </form>
+                </div>
+            </div>
+            
+            {% if showing_results %}
+                <!-- Results Section -->
+                <h2 class="mb-3">Results for "{{ search_query }}"</h2>
+                
+                {% if results %}
+                    <div class="row">
+                        {% for food in results %}
+                            <div class="col-md-4">
+                                <div class="card food-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ food.name }}</h5>
+                                        <div class="star-rating mb-2">
+                                            {% for i in range(food.stars.full) %}
+                                                <span class="star-rating">★</span>
+                                            {% endfor %}
+                                            
+                                            {% if food.stars.half %}
+                                                <span class="star-rating">½</span>
+                                            {% endif %}
+                                            
+                                            {% for i in range(food.stars.empty) %}
+                                                <span class="empty-star">☆</span>
+                                            {% endfor %}
+                                            
+                                            <small class="ms-1">({{ food.rating }})</small>
+                                        </div>
+                                        
+                                        <div class="mt-2">
+                                            {% for tag in food.tag_list %}
+                                                <span class="tag">{{ tag }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No results found. Try a different search term or lower the minimum rating.
+                    </div>
+                {% endif %}
+            {% else %}
+                <!-- Categories Section -->
+                <h2 class="mb-3">Explore by Category</h2>
+                <div class="row">
+                    {% for category in categories %}
+                        <div class="col-md-3 col-sm-6">
+                            <a href="/category/{{ category }}" class="btn btn-outline-primary category-btn w-100">{{ category|title }}</a>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+    
+    <footer class="mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <p>FoodyRS - Food Recommendation System &copy; 2025</p>
+        </div>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update rating display
+        document.addEventListener('DOMContentLoaded', function() {
+            var ratingSlider = document.getElementById('min_rating');
+            if (ratingSlider) {
+                ratingSlider.addEventListener('input', function() {
+                    document.getElementById('min_rating_value').textContent = this.value;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
